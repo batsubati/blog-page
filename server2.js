@@ -1,5 +1,6 @@
 // Importing express itself into the server
 const express = require('express');
+<<<<<<< HEAD
 const Database = require('better-sqlite3');
 
 // Calling express creates an app
@@ -18,6 +19,14 @@ db.exec(`
 `);
 
 
+=======
+
+// Calling express creates an app
+const app = express();
+
+app.use(express.urlencoded({ extended: true }));
+
+>>>>>>> 76f40258251595be7bcac3e4b5bd359844501bf5
 app.get('/', (req, res) => {
   res.send(`
   <h1>New Post</h1>
@@ -30,6 +39,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/posts', (req, res) => {
+<<<<<<< HEAD
   const { title, content } = req.body;
 
   const stmt = db.prepare('INSERT INTO posts (title, content) VALUES (?, ?)');
@@ -53,6 +63,13 @@ app.get('/posts', (req, res) => {
 });
 
 
+=======
+  console.log(req.body)
+
+  res.send(`Recieved title: ${req.body.title}, Content: ${req.body.content}`);
+});
+
+>>>>>>> 76f40258251595be7bcac3e4b5bd359844501bf5
 app.get('/about', (req, res) => {
   res.send('About page')
 });
