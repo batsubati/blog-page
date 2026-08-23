@@ -20,7 +20,7 @@ app.use(express.static('public'));
 app.set('view engine', 'ejs');
 
 app.use(session({
-  secret: 'only-admin-allowed',
+  secret: process.env.SESSION_SECRET || 'only-admin-allowed',
   resave: false,
   saveUninitialized: false
 }));
@@ -163,7 +163,7 @@ app.get('/about', (req, res) => {
   res.render('about')
 });
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running succesfully at port: ${PORT}`)
 });
