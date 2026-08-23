@@ -70,7 +70,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
-  if (req.session.isAdmin) {
+  if (!req.session.isAdmin) {
     return res.redirect('/login')
   }
 

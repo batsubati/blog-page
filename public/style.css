@@ -220,3 +220,29 @@ button:hover, input[type="submit"]:hover { opacity: 0.9; }
 
 .prose { color: var(--text-dim); font-size: 0.92rem; }
 .prose p { margin: 0 0 1rem; }
+
+.about-page {
+  text-align: center;
+  padding-top: 1rem;
+}
+
+.about-photo {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  object-position: center 20%;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+.about-name {
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-bottom: 0.75rem;
+}
+
+.about-page .prose {
+  text-align: left;
+  max-width: 380px;
+  margin: 0 auto;
+}
