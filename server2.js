@@ -1,11 +1,29 @@
 // Importing express itself into the server
 const express = require('express');
-<<<<<<< HEAD
 const Database = require('better-sqlite3');
+
+// multer added
+const multer = require('multer');
+
+// express-session for admin auth installatiom
+const session = require('express-session');
+
 
 // Calling express creates an app
 const app = express();
 app.use(express.urlencoded({ extended: true }));
+
+//adding frontend
+app.use(express.static('public'));
+
+//adding ejs - html inside js
+app.set('view engine', 'ejs');
+
+app.use(session({
+  secret: 'only-admin-allowed',
+  resave: false,
+  saveUninitialized: false
+}));
 
 //Creating the database file
 const db = new Database('blog.db'); 
@@ -14,67 +32,138 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS posts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
-    content TEXT NOT NULL
+    content TEXT NOT NULL,
+    image TEXT 
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id INTEGER NOT NULL,
+    content TEXT NOT NULL
+  )
+`)
 
-=======
-
-// Calling express creates an app
-const app = express();
-
-app.use(express.urlencoded({ extended: true }));
-
->>>>>>> 76f40258251595be7bcac3e4b5bd359844501bf5
-app.get('/', (req, res) => {
-  res.send(`
-  <h1>New Post</h1>
-  <form action="/posts" method="POST">
-    <input type="text" name="title" placeholder="Title" /><br/>
-    <textarea name="content" placeholder="Write something..."></textarea><br/>
-    <button type="submit">Submit</button>
-  </form>
-  `);
+const storage = multer.diskStorage({
+  destination: 'uploads/',
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + '-' + file.originalname;
+    cb(null, uniqueName);
+  }
 });
 
-app.post('/posts', (req, res) => {
-<<<<<<< HEAD
+const upload = multer({ storage: storage });
+
+app.use('/uploads', express.static('uploads'));
+
+app.get('/', (req, res) => {
+  const posts = db.prepare('SELECT * FROM posts').all();
+
+  const postsWithComments = posts.map(post => {
+    const comments = db.prepare('SELECT * FROM comments WHERE post_id = ?').all(post.id);
+    return { ...post, comments: comments };
+  });
+
+  res.render('home', { posts: postsWithComments });
+
+});
+
+app.get('/admin', (req, res) => {
+  if (req.session.isAdmin) {
+    return res.redirect('/login')
+  }
+
+  res.render('index',);
+});
+
+app.post('/posts', upload.single('image'), (req, res) => {
+  if (!req.session.isAdmin) {
+    return res.send('Not authorized');
+  }
+
+  console.log('req.file:', req.file);
+  console.log('req.body:', req.body)
+
   const { title, content } = req.body;
+  const imagePath = req.file ? req.file.filename : null;
 
-  const stmt = db.prepare('INSERT INTO posts (title, content) VALUES (?, ?)');
-  stmt.run(title, content);
+  const stmt = db.prepare('INSERT INTO posts (title, content, image) VALUES (?, ?, ?)');
+  stmt.run(title, content, imagePath);
 
-  res.send(`Saved! Title: ${title}`);
-
-
+  res.redirect('/posts')
 });
 
 app.get('/posts', (req, res) => {
+  if (!req.session.isAdmin) {
+    return res.redirect('/login')
+  }
+
   const posts = db.prepare('SELECT * FROM posts').all();
+  const postsWithComments = posts.map(post => {
+    const comments = db.prepare('SELECT * FROM comments WHERE post_id = ?').all(post.id);
+    return { ...post, comments: comments };
+  });
 
-  const html = posts.map(post => 
-    `<h2>${post.title}</h2>
-    <p>${post.content}</p>
-    <hr/>`
-    ).join('');
-
-    res.send(html)
+  res.render('posts', { posts: postsWithComments })
 });
 
+app.post('/posts/:id/delete', (req, res) => {
+  if (!req.session.isAdmin) {
+    return res.send('Not authorized');
+  }
 
-=======
-  console.log(req.body)
-
-  res.send(`Recieved title: ${req.body.title}, Content: ${req.body.content}`);
+  const { id } = req.params;
+  const stmt = db.prepare('DELETE FROM posts WHERE id = ?');
+  stmt.run(id);
+  res.redirect('/posts');
 });
 
->>>>>>> 76f40258251595be7bcac3e4b5bd359844501bf5
+// comment POST 
+app.post('/posts/:id/comments', (req, res) => {
+  const { id } = req.params
+  const { content } = req.body
+
+  const stmt = db.prepare('INSERT INTO comments (post_id, content) VALUES (?, ?)');
+  stmt.run(id, content);
+
+  res.redirect('/')
+}); 
+
+// admin panel delete the comment
+app.post('/comments/:id/delete', (req, res) => {
+  if(!req.session.isAdmin) {
+    return res.send('Not authorized')
+  }
+
+  const { id } = req.params
+  const stmt = db.prepare('DELETE FROM comments WHERE id = ?');
+  stmt.run(id);
+
+  res.redirect('/posts')
+});
+
+//login page created
+app.get('/login', (req, res) => {
+  res.render('login')
+});
+
+app.post('/login', (req, res) => {
+  const { password } = req.body;
+
+  if (password === '1234asdF') {
+    req.session.isAdmin = true
+    res.redirect('/posts')
+  } else {
+    res.send('Wrong password');
+  }
+});
+
 app.get('/about', (req, res) => {
-  res.send('About page')
+  res.render('about')
 });
 
-const PORT = 3000;
+const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`Server running succesfully at port: ${PORT}`)
 });
