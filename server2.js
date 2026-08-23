@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 //adding frontend
 app.use(express.static('public'));
 
-//adding ejs - html inside js
+//adding ejs - html inside javascript
 app.set('view engine', 'ejs');
 
 app.use(session({
