@@ -246,3 +246,18 @@ button:hover, input[type="submit"]:hover { opacity: 0.9; }
   max-width: 380px;
   margin: 0 auto;
 }
+
+.search-form {
+  display: flex;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.search-form input {
+  padding: 6px 10px;
+}
+
+.search-form button {
+  padding: 6px 10px;
+  cursor: pointer;
+}

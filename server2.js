@@ -159,6 +159,26 @@ app.post('/login', (req, res) => {
   }
 });
 
+//adding the search festure
+app.get('/search', (req, res) => {
+  const { q } = req.query
+
+  if (!q) {
+    return res.redirect('/')
+  } 
+  const query = q.trim();
+  const searchPattern = `%${query}%`
+  // const limit = req.query.limit || 2;
+
+  const stmt = db.prepare("SELECT * FROM posts WHERE title LIKE ? OR content LIKE ?");
+  const results = stmt.all(searchPattern, searchPattern);
+
+  res.render('search' , {
+    posts: results,
+    query: query
+  });
+});
+
 app.get('/about', (req, res) => {
   res.render('about')
 });

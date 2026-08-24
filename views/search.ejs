@@ -2,12 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>The Blog Page</title>
+  <title>Search Results</title>
   <link rel="stylesheet" href="/style.css">
 </head>
+
 <body>
+
   <nav class="topnav">
     <a class="brand" href="/">Home page</a>
+
     <div class="links">
       <a href="/">Home</a>
       <a href="/about">About</a>
@@ -15,21 +18,29 @@
     </div>
 
     <form class="search-form" action="/search" method="GET">
-      <input type="text" name="q" placeholder="Search posts...">
+      <input
+        type="text"
+        name="q"
+        placeholder="Search posts..."
+        value="<%= query %>"
+      >
       <button type="submit">Search</button>
     </form>
   </nav>
 
   <main>
+
+    <h2>Search results for "<%= query %>"</h2>
+
     <% if (posts.length === 0) { %>
-      <p class="empty-state">No posts yet.</p>
+
+      <p>No posts found.</p>
+
     <% } else { %>
-      <% posts.forEach((post, i) => { %>
+
+      <% posts.forEach(post => { %>
+
         <div class="post">
-          <div class="post-header">
-            <div class="avatar">B</div>
-            <span class="frame-no">Post #<%= i + 1 %></span>
-          </div>
 
           <% if (post.image) { %>
             <img src="/uploads/<%= post.image %>" alt="<%= post.title %>">
@@ -40,20 +51,13 @@
             <p class="content"><%= post.content %></p>
           </div>
 
-          <div class="comments">
-            <p class="count"><%= post.comments.length %> comments</p>
-            <% post.comments.forEach(comment => { %>
-              <p class="comment-line"><%= comment.content %></p>
-            <% }) %>
-
-            <form class="comment-form" action="/posts/<%= post.id %>/comments" method="POST">
-              <input type="text" name="content" placeholder="Add a comment..." required>
-              <button type="submit">Post</button>
-            </form>
-          </div>
         </div>
+
       <% }) %>
+
     <% } %>
+
   </main>
+
 </body>
 </html>
