@@ -1,3 +1,5 @@
 node_modules/
 blog.db
 uploads/
+.env
+node_modules/

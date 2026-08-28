@@ -2,10 +2,10 @@
   "name": "photo-blog",
   "version": "1.0.0",
   "description": "",
-  "main": "server2.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server2.js"
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
@@ -13,9 +13,11 @@
   "type": "commonjs",
   "dependencies": {
     "better-sqlite3": "^13.0.3",
+    "dotenv": "^17.4.2",
     "ejs": "^6.0.1",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
+    "mongodb": "^7.6.0",
     "multer": "^2.2.0"
   }
 }

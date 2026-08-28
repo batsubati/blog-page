@@ -46,7 +46,7 @@
               <p class="comment-line"><%= comment.content %></p>
             <% }) %>
 
-            <form class="comment-form" action="/posts/<%= post.id %>/comments" method="POST">
+            <form class="comment-form" action="/posts/<%= post._id %>/comments" method="POST">
               <input type="text" name="content" placeholder="Add a comment..." required>
               <button type="submit">Post</button>
             </form>

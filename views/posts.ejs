@@ -28,14 +28,14 @@
             <p class="title"><%= post.title %></p>
             <p class="snippet"><%= post.content %></p>
 
-            <form action="/posts/<%= post.id %>/delete" method="POST" style="display:inline">
+            <form action="/posts/<%= post._id %>/delete" method="POST" style="display:inline">
               <button type="submit" class="btn-danger">Delete post</button>
             </form>
 
             <% post.comments.forEach(comment => { %>
               <div class="manage-comment">
                 <span><%= comment.content %></span>
-                <form action="/comments/<%= comment.id %>/delete" method="POST">
+                <form action="/comments/<%= comment._id %>/delete" method="POST">
                   <button type="submit" class="btn-danger">Remove</button>
                 </form>
               </div>
