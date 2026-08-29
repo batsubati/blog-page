@@ -1,5 +1,5 @@
 Photo Blog
-A full-stack blog built from scratch with Node.js, Express, and MongoDB. Features an Instagram-style public homepage, admin-only post management, public commenting, and search.
+A full-stack blog built from scratch with Node.js, Express, and MongoDB. Features a public homepage, admin-only post management, public commenting, and search.
 
 Features
 Public homepage (/) — Grid of posts with photos, open to all visitors
