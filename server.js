@@ -7,7 +7,8 @@ const multer = require('multer');
 // express-session for admin auth installatiom
 const session = require('express-session');
 
-
+//adding hashing
+const bcrypt = require('bcryptjs');
 
 // Calling express creates an app
 const app = express();
@@ -144,16 +145,21 @@ app.get('/login', (req, res) => {
   res.render('login')
 });
 
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
+  const { username } = req.body;
   const { password } = req.body;
 
-  if (password === process.env.ADMINPASSWORD) {
-    req.session.isAdmin = true
-    res.redirect('/posts')
-  } else {
-    res.send('Wrong password');
+  db = app.locals.db
+
+  if(!db.collection('accounts').findOne({ username : username })){
+    //error
   }
-});
+
+  if (await bcrypt.compare(password, user.password)){
+    req.session.isAdmin = true
+  }
+
+})
 
 //adding the search festure
 app.get('/search', async (req, res) => {
@@ -174,9 +180,31 @@ app.get('/search', async (req, res) => {
   });
 });
 
+//added register page
+app.get('/register', (req, res) => {
+  res.render('register');
+})
+
+app.post('/register', async (req, res) => {
+  const { username } = req.body
+  const { password } = req.body
+
+  db = app.locals.db;
+
+  if (await db.collection('accounts').findOne({ username : username})) {
+    return res.render('register', { error: 'Username already exists' })
+  } 
+
+  const passwordHashed = await bcrypt.hash(password, 10)
+  await db.collection('accounts').insertOne({ username : username , password: passwordHashed})
+
+  res.redirect('/')
+  
+})
+
 app.get('/about', (req, res) => {
-  res.render('about')
-});
+  res.render('about');
+})
 
 const PORT = process.env.PORT || 3000;
 
