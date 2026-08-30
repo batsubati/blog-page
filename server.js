@@ -10,6 +10,9 @@ const session = require('express-session');
 //adding hashing
 const bcrypt = require('bcryptjs');
 
+//adding rate limiting
+const sessionlimit = require('express-rate-limit');
+
 // Calling express creates an app
 const app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -19,6 +22,20 @@ app.use(express.static('public'));
 
 //adding ejs - html inside javascript
 app.set('view engine', 'ejs');
+
+//adding session rate limiting
+const loginLimiter = sessionlimit({
+  windowMs : 15 * 60 * 1000,
+  max: 5,
+  message: 'Too many login attempt'
+})
+
+const registerLimiter = sessionlimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  message: 'Too many accounts created'
+})
+
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'only-admin-allowed',
@@ -31,6 +48,26 @@ const { mongoDBConnect } = require('./db');
 const { ObjectId } = require('mongodb');
 console.log(require('./db'))
 
+//adding res.locals
+app.use(async (req, res, next) => {
+  if (req.session.userId) {
+    const db = app.locals.db;
+    const result = await db.collection('accounts').findOne({ _id : new ObjectId(req.session.userId) })
+    res.locals.currentUser = result
+  } else {
+    res.locals.currentUser = null;
+  }
+  next();
+})
+
+//adding admin check
+function requireAdmin(req, res, next) {
+  if (res.locals.currentUser && res.locals.currentUser.isAdmin) {
+    next();
+  } else {
+    return res.redirect('/login');
+  }
+}
 
 const storage = multer.diskStorage({
   destination: 'uploads/',
@@ -58,12 +95,9 @@ app.get('/', async (req, res) => {
 
 });
 
-app.get('/admin', (req, res) => {
-  if (!req.session.isAdmin) {
-    return res.redirect('/login')
-  }
+app.get('/admin', requireAdmin, (req, res) => {
 
-  res.render('index',);
+  res.render('index');
 });
 
 app.post('/posts', upload.single('image'), async (req, res) => {
@@ -83,10 +117,8 @@ app.post('/posts', upload.single('image'), async (req, res) => {
   res.redirect('/posts')
 });
 
-app.get('/posts', async (req, res) => {
-  if (!req.session.isAdmin) {
-    return res.redirect('/login')
-  }
+app.get('/posts', requireAdmin, async (req, res) => {
+
   const db = app.locals.db;
   const posts = await db.collection('posts').find().toArray();
 
@@ -142,21 +174,26 @@ app.post('/comments/:id/delete', async (req, res) => {
 
 //login page created
 app.get('/login', (req, res) => {
-  res.render('login')
+  res.render('login', {error: null})
 });
 
-app.post('/login', async (req, res) => {
+app.post('/login', loginLimiter, async (req, res) => {
   const { username } = req.body;
   const { password } = req.body;
 
-  db = app.locals.db
+  const db = app.locals.db
 
-  if(!db.collection('accounts').findOne({ username : username })){
-    //error
+  const user = await db.collection('accounts').findOne({ username: username });
+
+  if(!user){
+    return res.render('login', {error: 'Username doesnt exist'})
   }
 
   if (await bcrypt.compare(password, user.password)){
-    req.session.isAdmin = true
+    req.session.userId = user._id.toString();
+    res.redirect('/')
+  } else {
+    return res.render('login', { error: 'Wrong password' })
   }
 
 })
@@ -182,24 +219,25 @@ app.get('/search', async (req, res) => {
 
 //added register page
 app.get('/register', (req, res) => {
-  res.render('register');
+  res.render('register', {error: null});
 })
 
-app.post('/register', async (req, res) => {
+app.post('/register', registerLimiter, async (req, res) => {
   const { username } = req.body
   const { password } = req.body
 
-  db = app.locals.db;
+  const db = app.locals.db;
+  const user = await db.collection('accounts').findOne({ username : username })
 
-  if (await db.collection('accounts').findOne({ username : username})) {
+  if (user) {
     return res.render('register', { error: 'Username already exists' })
   } 
 
   const passwordHashed = await bcrypt.hash(password, 10)
-  await db.collection('accounts').insertOne({ username : username , password: passwordHashed})
-
+  const result = await db.collection('accounts').insertOne({ username : username , password: passwordHashed})
+  req.session.userId = result.insertedId.toString();
+  console.log(result)
   res.redirect('/')
-  
 })
 
 app.get('/about', (req, res) => {

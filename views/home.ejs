@@ -11,13 +11,24 @@
     <div class="links">
       <a href="/">Home</a>
       <a href="/about">About</a>
-      <a href="/login">Admin</a>
+      <% if (currentUser && currentUser.isAdmin) { %>
+        <a href="/admin">Admin</a>
+      <% } %>
     </div>
-
+  
     <form class="search-form" action="/search" method="GET">
       <input type="text" name="q" placeholder="Search posts...">
       <button type="submit">Search</button>
     </form>
+  
+    <% if (currentUser) { %>
+      <a href="/profile" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; margin-left: 1rem;">
+        <div class="avatar"><%= currentUser.username[0].toUpperCase() %></div>
+        <span style="font-size: 0.85rem;"><%= currentUser.username %></span>
+      </a>
+    <% } else { %>
+      <a href="/login" style="margin-left: 1rem; font-size: 0.85rem; color: var(--text-dim);">Log in</a>
+    <% } %>
   </nav>
 
   <main>
