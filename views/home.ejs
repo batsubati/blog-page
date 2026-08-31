@@ -54,13 +54,31 @@
           <div class="comments">
             <p class="count"><%= post.comments.length %> comments</p>
             <% post.comments.forEach(comment => { %>
-              <p class="comment-line"><%= comment.content %></p>
+              <p class="comment-line" style="display: flex; align-items: center; gap: 0.5rem;">
+                <% if (comment.user[0]) { %>
+                  <span class="avatar"><%= comment.user[0].username[0].toUpperCase() %></span>
+                  <strong><%= comment.user[0].username %>:</strong>
+                <% } else { %>
+                  <span class="avatar">?</span>
+                  <strong>Unknown user:</strong>
+                <% } %>
+                <%= comment.content %>
+                <% if (currentUser && comment.user[0] && comment.user[0]._id.toString() === currentUser._id.toString()) { %>
+                  <form action="/comments/<%= comment._id %>/delete-own" method="POST" style="display:inline;">
+                    <button type="submit" class="btn-danger">Delete</button>
+                  </form>
+                <% } %>
+              </p>
             <% }) %>
 
-            <form class="comment-form" action="/posts/<%= post._id %>/comments" method="POST">
-              <input type="text" name="content" placeholder="Add a comment..." required>
-              <button type="submit">Post</button>
-            </form>
+            <% if (currentUser) { %>
+              <form class="comment-form" action="/posts/<%= post._id %>/comments" method="POST">
+                <input type="text" name="content" placeholder="Add a comment..." required>
+                <button type="submit">Post</button>
+              </form>
+            <% } else { %>
+              <p class="empty-state"><a href="/login">Log in</a> to leave a comment.</p>
+            <% } %>
           </div>
         </div>
       <% }) %>

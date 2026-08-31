@@ -69,6 +69,15 @@ function requireAdmin(req, res, next) {
   }
 }
 
+//adding comments middleware
+function isLoggedin(req, res, next) {
+  if (res.locals.currentUser) {
+    next();
+  } else {
+    return res.redirect('/login');
+  }
+}
+
 const storage = multer.diskStorage({
   destination: 'uploads/',
   filename: (req, file, cb) => {
@@ -87,7 +96,17 @@ app.get('/', async (req, res) => {
   const postsWithComments = [];
 
   for (const post of posts) {
-    const comments =  await app.locals.db.collection('comments').find({ post_id: post._id }).toArray(); 
+    const comments = await app.locals.db.collection('comments').aggregate([
+      { $match: { post_id: post._id } },
+      {
+        $lookup: {
+          from: 'accounts',
+          localField: 'user_id',
+          foreignField: '_id',
+          as: 'user'
+        }
+      }
+    ]).toArray();
     postsWithComments.push({...post, comments: comments})
   }
 
@@ -132,10 +151,7 @@ app.get('/posts', requireAdmin, async (req, res) => {
   res.render('posts', { posts: postsWithComments })
 });
 
-app.post('/posts/:id/delete', async (req, res) => {
-  if (!req.session.isAdmin) {
-    return res.send('Not authorized');
-  }
+app.post('/posts/:id/delete', requireAdmin, async (req, res) => {
 
   const { id } = req.params;
   const db = app.locals.db;
@@ -146,23 +162,19 @@ app.post('/posts/:id/delete', async (req, res) => {
 });
 
 // comment POST 
-app.post('/posts/:id/comments', async (req, res) => {
+app.post('/posts/:id/comments', isLoggedin, async (req, res) => {
   const { id } = req.params
   const { content } = req.body
   const postID = new ObjectId(id);
 
   const db = app.locals.db;
-  await db.collection('comments').insertOne({ post_id: postID, content: content })
+  await db.collection('comments').insertOne({ post_id: postID, user_id: res.locals.currentUser._id ,content: content })
 
   res.redirect('/')
 }); 
 
 // admin panel delete the comment
-app.post('/comments/:id/delete', async (req, res) => {
-  if(!req.session.isAdmin) {
-    return res.send('Not authorized')
-  }
-
+app.post('/comments/:id/delete', requireAdmin, async (req, res) => {
   const { id } = req.params
   const db = app.locals.db;
   const commentID = new ObjectId(id);
@@ -171,6 +183,21 @@ app.post('/comments/:id/delete', async (req, res) => {
 
   res.redirect('/posts')
 });
+
+//users to delete their comments
+app.post('/comments/:id/delete-own', isLoggedin ,async (req, res) =>{
+  const { id } = req.params;
+  const db = app.locals.db
+  const commentID = new ObjectId(id);
+
+  const comment = await db.collection('comments').findOne({ _id: commentID })
+  if (comment.user_id.toString() === res.locals.currentUser._id.toString()) {
+    await db.collection('comments').deleteOne({ _id: commentID })
+    return res.redirect('/')
+  } else {
+    return res.redirect('/')
+  }
+})
 
 //login page created
 app.get('/login', (req, res) => {
